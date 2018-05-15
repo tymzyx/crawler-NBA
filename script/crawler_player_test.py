@@ -118,7 +118,7 @@ def get_players_url(headers):
 
 def main_sohu(headers):
     mongo = db.connect_db()
-    collection = mongo.players_sohu
+    collection = mongo.sohu_players
     players_url = get_players_url(headers)
     insert_num = 50  # 每次插入数据库数据量
     players_length = len(players_url)
@@ -214,7 +214,7 @@ def sohu_thread_func(players_url, count, start_index, collection, thread_name):
                 'score': float(career_tds[16].get_text()) if career_tds[16].get_text() else 0       # 得分
             }
         insert_data.append({
-            'id': player_id,
+            'playerId': player_id,
             'name': name,
             'engName': eng_name,
             'bornCity': born_city,

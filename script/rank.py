@@ -4,12 +4,12 @@ from db import db
 
 def sohu_rank():
     mongo = db.connect_db()
-    collection_player = mongo.players_sohu
+    collection_player = mongo.sohu_players
     res_all = collection_player.find({})
     res_filters = {}
     for res in res_all:
         if '2017-2018' in res['career']['avg']:
-            res_filters[res['id']] = res['career']['avg']['2017-2018']
+            res_filters[res['playerId']] = res['career']['avg']['2017-2018']
     res_maps = {
         'score': [],
         'assist': [],
@@ -26,7 +26,7 @@ def sohu_rank():
         for i in range(100):
             player_id, data = res_maps[rank_type][i].split('|')
             rank_data.append({
-                'id': player_id,
+                'playerId': player_id,
                 'type': rank_type,
                 'data': float(data)
             })
