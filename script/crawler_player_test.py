@@ -2,8 +2,9 @@
 import requests
 from bs4 import BeautifulSoup
 import threading
-from pymongo import MongoClient
 import time
+
+from db import db
 
 # import sys
 # reload(sys)
@@ -73,12 +74,6 @@ sohu_headers = {
 }
 
 
-def connect_db():
-    client = MongoClient('localhost', 27017)
-    db = client.nba
-    return db
-
-
 class MyThread(threading.Thread):  # 继承父类threading.Thread
     def __init__(self, thread_id, thread_name, thread_func, collection, base_info, count=0, start_index=0):
         threading.Thread.__init__(self)
@@ -122,8 +117,8 @@ def get_players_url(headers):
 
 
 def main_sohu(headers):
-    db = connect_db()
-    collection = db.players_sohu
+    mongo = db.connect_db()
+    collection = mongo.players_sohu
     players_url = get_players_url(headers)
     insert_num = 50  # 每次插入数据库数据量
     players_length = len(players_url)
@@ -169,10 +164,10 @@ def sohu_thread_func(players_url, count, start_index, collection, thread_name):
         career_avg_doc = career_doc[1]
         career_info = {'avg': {}, 'sum': {}}
         career_sum_trs = career_sum_doc.find_all('tr')
-        for i in range(1, len(career_sum_trs)):
-            career_tds = career_sum_trs[i].find_all('td')
+        for j in range(1, len(career_sum_trs)):
+            career_tds = career_sum_trs[j].find_all('td')
             season = career_tds[0].get_text(strip=True)
-            if i == len(career_sum_trs)-1:
+            if j == len(career_sum_trs)-1:
                 season = 'career'
             career_info['sum'][season] = {
                 'season': season,                                                                   # 赛季
@@ -183,19 +178,21 @@ def sohu_thread_func(players_url, count, start_index, collection, thread_name):
                 'hit': career_tds[5].get_text(),                                                    # 命中
                 'three': career_tds[6].get_text(),                                                  # 三分
                 'penalty': career_tds[7].get_text(),                                                # 罚球
-                'rebound': float(career_tds[8].get_text()) if career_tds[8].get_text() else 0,      # 篮板
-                'ofRebound': float(career_tds[9].get_text()) if career_tds[9].get_text() else 0,    # 进攻篮板
-                'deRebound': float(career_tds[10].get_text()) if career_tds[10].get_text() else 0,  # 防守篮板
-                'block': float(career_tds[11].get_text()) if career_tds[11].get_text() else 0,      # 盖帽
-                'miss': float(career_tds[12].get_text()) if career_tds[12].get_text() else 0,       # 失误
-                'foul': float(career_tds[13].get_text()) if career_tds[13].get_text() else 0,       # 犯规
-                'score': float(career_tds[14].get_text()) if career_tds[14].get_text() else 0       # 得分
+                'ofRebound': float(career_tds[8].get_text()) if career_tds[8].get_text() else 0,    # 进攻篮板
+                'deRebound': float(career_tds[9].get_text()) if career_tds[9].get_text() else 0,    # 防守篮板
+                'rebound': float(career_tds[10].get_text()) if career_tds[10].get_text() else 0,    # 篮板
+                'assist': float(career_tds[11].get_text()) if career_tds[11].get_text() else 0,     # 助攻
+                'steal': float(career_tds[12].get_text()) if career_tds[12].get_text() else 0,      # 抢断
+                'block': float(career_tds[13].get_text()) if career_tds[13].get_text() else 0,      # 盖帽
+                'miss': float(career_tds[14].get_text()) if career_tds[14].get_text() else 0,       # 失误
+                'foul': float(career_tds[15].get_text()) if career_tds[15].get_text() else 0,       # 犯规
+                'score': float(career_tds[16].get_text()) if career_tds[16].get_text() else 0       # 得分
             }
         career_avg_trs = career_avg_doc.find_all('tr')
-        for i in range(1, len(career_avg_trs)):
-            career_tds = career_avg_trs[i].find_all('td')
+        for j in range(1, len(career_avg_trs)):
+            career_tds = career_avg_trs[j].find_all('td')
             season = career_tds[0].get_text(strip=True)
-            if i == len(career_avg_trs)-1:
+            if j == len(career_avg_trs)-1:
                 season = 'career'
             career_info['avg'][season] = {
                 'season': season,                                                                   # 赛季
@@ -206,13 +203,15 @@ def sohu_thread_func(players_url, count, start_index, collection, thread_name):
                 'hit': float(career_tds[5].get_text()) if career_tds[5].get_text() else 0,          # 命中
                 'three': float(career_tds[6].get_text()) if career_tds[6].get_text() else 0,        # 三分
                 'penalty': float(career_tds[7].get_text()) if career_tds[7].get_text() else 0,      # 罚球
-                'rebound': float(career_tds[8].get_text()) if career_tds[8].get_text() else 0,      # 篮板
-                'ofRebound': float(career_tds[9].get_text()) if career_tds[9].get_text() else 0,    # 进攻篮板
-                'deRebound': float(career_tds[10].get_text()) if career_tds[10].get_text() else 0,  # 防守篮板
-                'block': float(career_tds[11].get_text()) if career_tds[11].get_text() else 0,      # 盖帽
-                'miss': float(career_tds[12].get_text()) if career_tds[12].get_text() else 0,       # 失误
-                'foul': float(career_tds[13].get_text()) if career_tds[13].get_text() else 0,       # 犯规
-                'score': float(career_tds[14].get_text()) if career_tds[14].get_text() else 0       # 得分
+                'ofRebound': float(career_tds[8].get_text()) if career_tds[8].get_text() else 0,    # 进攻篮板
+                'deRebound': float(career_tds[9].get_text()) if career_tds[9].get_text() else 0,    # 防守篮板
+                'rebound': float(career_tds[10].get_text()) if career_tds[10].get_text() else 0,    # 篮板
+                'assist': float(career_tds[11].get_text()) if career_tds[11].get_text() else 0,     # 助攻
+                'steal': float(career_tds[12].get_text()) if career_tds[12].get_text() else 0,      # 抢断
+                'block': float(career_tds[13].get_text()) if career_tds[13].get_text() else 0,      # 盖帽
+                'miss': float(career_tds[14].get_text()) if career_tds[14].get_text() else 0,       # 失误
+                'foul': float(career_tds[15].get_text()) if career_tds[15].get_text() else 0,       # 犯规
+                'score': float(career_tds[16].get_text()) if career_tds[16].get_text() else 0       # 得分
             }
         insert_data.append({
             'id': player_id,
