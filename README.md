@@ -1,3 +1,3 @@
-# crawler-nba
+# crawler-python
 
-a python crawler project for nba data
+python crawlers project
