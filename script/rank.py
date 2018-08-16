@@ -53,13 +53,13 @@ def quick_sort(data, left, right):
             t = data[i]
             data[i] = data[j]
             data[j] = t
-    # 最后归为基准数
+    # 最后归位基准数
     t = data[left]
     data[left] = data[i]
     data[i] = t
 
-    quick_sort(data, left, i - 1)  # 通过递归急需处理左边的
-    quick_sort(data, i + 1, right)  # 通过递归急需处理右边的
+    quick_sort(data, left, i - 1)  # 通过递归继续处理左边的
+    quick_sort(data, i + 1, right)  # 通过递归继续处理右边的
 
 
 if __name__ == '__main__':
