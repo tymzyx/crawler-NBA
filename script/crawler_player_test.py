@@ -117,7 +117,7 @@ def get_players_url(headers):
 
 
 def main_sohu(headers):
-    mongo = db.connect_db()
+    mongo = db.connect_db('nba')
     collection = mongo.sohu_players
     players_url = get_players_url(headers)
     insert_num = 50  # 每次插入数据库数据量

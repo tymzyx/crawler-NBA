@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 
-def connect_db():
+def connect_db(db_name):
     client = MongoClient('localhost', 27017)
-    db = client.nba
+    db = client[db_name]
     return db

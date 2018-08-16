@@ -4,6 +4,12 @@ from bs4 import BeautifulSoup
 from base import *
 import threading
 
+import sys
+sys.path.append("..")
+reload(sys)
+sys.setdefaultencoding('utf8')
+from db import db
+
 tag_url = 'https://book.douban.com/tag/'
 
 
@@ -46,11 +52,12 @@ def get_tag_info():
         tag_info[title_node['name']] = temp_tag_content
 
 
-def get_book_detail(tag_type):
-    insert_data = []
-    for page in range(25):
+def get_book_detail(tag_type, collection):
+    page_nums = 1  # default = 25
+    for page in range(page_nums):
+        insert_data = []
         start_num = page * 20
-        url = tag_url + tag_type + '?start=' + str(start_num) + '&type=S'
+        url = tag_url + tag_type + '?start=' + str(start_num) + '&type=S'  # type S -> 按评价; R -> 按出版日期; T -> 综合
         html = requests.get(url, headers).text
         soup = BeautifulSoup(html, 'lxml')
         book_item_nodes = soup.find_all('li', class_='subject-item')
@@ -76,6 +83,7 @@ def get_book_detail(tag_type):
             detail_html = requests.get(detail_url, headers).text
             detail_soup = BeautifulSoup(detail_html, 'lxml')
             book_name = detail_soup.find('h1').find('span').get_text()  # 书名
+            print '正在爬取 ' + tag_type + ' ' + book_name
             book_rating = detail_soup.find('strong', class_='rating_num').get_text()  # 评分
             rating_people = detail_soup.find('a', class_='rating_people').find('span').get_text()  # 评价人数
             rating_pers_node = detail_soup.find_all('span', class_='rating_per')
@@ -87,10 +95,13 @@ def get_book_detail(tag_type):
             else:
                 indent_content_intro = '-'.join(map(lambda x: x.get_text(), indent_content_intros[0].find_all('p')))  # 内容简介
             indent_author_intro = indent_nodes[2].find('div', class_='intro').get_text()  # 作者简介
-            print 'dir_' + book_id + '_full'
-            indent_catalog_intro = \
-                detail_soup.find('div', id='dir_' + book_id + '_full', ).get_text('-', strip=True).split('-')
-            indent_catalog_intro = indent_catalog_intro[:-3]  # 目录
+            # print 'dir_' + book_id + '_full'
+            indent_catalog_node = detail_soup.find('div', id='dir_' + book_id + '_full')
+            if indent_catalog_node:
+                indent_catalog_intro = indent_catalog_node.get_text('-', strip=True).split('-')
+                indent_catalog_intro = indent_catalog_intro[:-3]  # 目录
+            else:
+                indent_catalog_intro = []
             regular_tag = []  # 常用标签
             regular_tag_nodes = detail_soup.find('div', id='db-tags-section').find('div', class_='indent').find_all('a')
             for tag_node in regular_tag_nodes:
@@ -112,6 +123,7 @@ def get_book_detail(tag_type):
                     'id': relation_like_tag['href'].split('/')[-2]
                 })
             insert_data.append({
+                'tag': tag_type,
                 'id': book_id,
                 'name': book_name,
                 'author': author,
@@ -130,6 +142,9 @@ def get_book_detail(tag_type):
                 'regularTag': regular_tag,
                 'relationLikes': relation_likes
             })
+        # 插入数据库
+        print 'insert to mongodb'
+        collection.insert_many(insert_data)
 
 
 def get_book_img(img_url, img_name):
@@ -139,10 +154,14 @@ def get_book_img(img_url, img_name):
 
 
 def main_crawler():
+    mongo = db.connect_db('douban')
+    collection = mongo.book_detail
+    get_book_detail('小说', collection)
     return
 
 
 if __name__ == '__main__':
     # get_tag_info()
     # get_book_img()
-    get_book_detail('小说')
+    # get_book_detail('小说')
+    main_crawler()
