@@ -10,6 +10,7 @@ reload(sys)
 sys.setdefaultencoding('utf8')
 from db import db
 
+
 tag_url = 'https://book.douban.com/tag/'
 
 
@@ -63,7 +64,7 @@ def get_book_detail(tag_type, collection):
         book_item_nodes = soup.find_all('li', class_='subject-item')
         for book_item_node in book_item_nodes:
             img_url = book_item_node.find('div', class_='pic').find('img')['src']
-            get_book_img(img_url, img_url.split('/')[-1])
+            get_book_img(img_url, img_url.split('/')[-1])  # 存储图书封面图片
             book_img_url = img_url.split('/')[-1]  # 图片路径
             book_other_detail = book_item_node.find('div', class_='pub').get_text().strip().split('/')
             if len(book_other_detail) == 5:
@@ -132,7 +133,7 @@ def get_book_detail(tag_type, collection):
                 'publishDate': publish_date,
                 'price': price,
                 'img': book_img_url,
-                'rating': book_rating,
+                'rating': float(book_rating),
                 'ratingNum': rating_people,
                 'ratingPer': rating_pers,
                 'contentIntro': indent_content_intro,
