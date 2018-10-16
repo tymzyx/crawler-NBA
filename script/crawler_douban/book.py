@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from base import *
 import threading
+import time
 
 import sys
 sys.path.append("..")
@@ -54,7 +55,7 @@ def get_tag_info():
 
 
 def get_book_detail(tag_type, collection):
-    page_nums = 1  # default = 25
+    page_nums = 50  # default = 25
     for page in range(page_nums):
         insert_data = []
         start_num = page * 20
@@ -64,7 +65,7 @@ def get_book_detail(tag_type, collection):
         book_item_nodes = soup.find_all('li', class_='subject-item')
         for book_item_node in book_item_nodes:
             img_url = book_item_node.find('div', class_='pic').find('img')['src']
-            get_book_img(img_url, img_url.split('/')[-1])  # 存储图书封面图片
+            # get_book_img(img_url, img_url.split('/')[-1])  # 存储图书封面图片
             book_img_url = img_url.split('/')[-1]  # 图片路径
             book_other_detail = book_item_node.find('div', class_='pub').get_text().strip().split('/')
             if len(book_other_detail) == 5:
@@ -143,9 +144,11 @@ def get_book_detail(tag_type, collection):
                 'regularTag': regular_tag,
                 'relationLikes': relation_likes
             })
+            time.sleep(5)
+        time.sleep(30)
         # 插入数据库
         print 'insert to mongodb'
-        collection.insert_many(insert_data)
+        # collection.insert_many(insert_data)
 
 
 def get_book_img(img_url, img_name):
